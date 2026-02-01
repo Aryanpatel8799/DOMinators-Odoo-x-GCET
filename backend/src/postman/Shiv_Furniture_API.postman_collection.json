@@ -1,0 +1,1808 @@
+{
+  "info": {
+    "_postman_id": "shiv-furniture-api-collection",
+    "name": "Shiv Furniture API",
+    "description": "Complete API collection for Shiv Furniture Budget Accounting System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "contactId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorContactId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "analyticalAccountId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "autoAnalyticalModelId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "budgetId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "purchaseOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorBillId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "salesOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerInvoiceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "1.1 Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.token) {",
+                  "    pm.collectionVariables.set('adminToken', response.data.token);",
+                  "    console.log('Admin token saved successfully');",
+                  "}",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has token', function () {",
+                  "    pm.expect(response.data).to.have.property('token');",
+                  "});",
+                  "",
+                  "pm.test('User role is ADMIN', function () {",
+                  "    pm.expect(response.data.user.role).to.eql('ADMIN');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@shivfurniture.com\",\n    \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "1.2 Get Current User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has user data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('email');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "1.3 Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentPassword\": \"admin123\",\n    \"newPassword\": \"newadmin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "1.4 Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@shivfurniture.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Contacts (Customers & Vendors)",
+      "item": [
+        {
+          "name": "2.1 Create Customer Contact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('contactId', response.data.id);",
+                  "    console.log('Customer contact ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Contact created successfully', function () {",
+                  "    pm.expect(response.data).to.have.property('id');",
+                  "    pm.expect(response.data.type).to.eql('CUSTOMER');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Rajesh Kumar\",\n    \"type\": \"CUSTOMER\",\n    \"email\": \"rajesh.kumar@example.com\",\n    \"phone\": \"9876543210\",\n    \"gstin\": \"27AABCU9603R1ZM\",\n    \"address\": \"123 MG Road, Mumbai\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"tags\": [\"premium\", \"retail\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"]
+            }
+          }
+        },
+        {
+          "name": "2.2 Create Vendor Contact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('vendorContactId', response.data.id);",
+                  "    console.log('Vendor contact ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Vendor created successfully', function () {",
+                  "    pm.expect(response.data.type).to.eql('VENDOR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Wood Suppliers Ltd\",\n    \"type\": \"VENDOR\",\n    \"email\": \"sales@woodsuppliers.com\",\n    \"phone\": \"9123456789\",\n    \"gstin\": \"27AABCS1429B1ZB\",\n    \"address\": \"456 Industrial Area, Pune\",\n    \"city\": \"Pune\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"411001\",\n    \"tags\": [\"wood\", \"raw-material\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"]
+            }
+          }
+        },
+        {
+          "name": "2.3 Get All Contacts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has data array', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.4 Get Contacts by Type (Customers)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts?type=CUSTOMER",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"],
+              "query": [
+                { "key": "type", "value": "CUSTOMER" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.5 Get Contacts by Type (Vendors)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts?type=VENDOR",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"],
+              "query": [
+                { "key": "type", "value": "VENDOR" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.6 Get Contact by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/{{contactId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts", "{{contactId}}"]
+            }
+          }
+        },
+        {
+          "name": "2.7 Update Contact",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Rajesh Kumar (Updated)\",\n    \"phone\": \"9876543211\",\n    \"tags\": [\"premium\", \"retail\", \"vip\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contacts/{{contactId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts", "{{contactId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Product Categories",
+      "item": [
+        {
+          "name": "3.1 Create Product Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('categoryId', response.data.id);",
+                  "    console.log('Category ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Living Room Furniture\",\n    \"description\": \"Sofas, chairs, tables for living room\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "categories"]
+            }
+          }
+        },
+        {
+          "name": "3.2 Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "categories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Products",
+      "item": [
+        {
+          "name": "4.1 Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('productId', response.data.id);",
+                  "    console.log('Product ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Premium Teak Wood Sofa Set\",\n    \"sku\": \"SOFA-TEAK-001\",\n    \"description\": \"5-seater premium teak wood sofa set with cushions\",\n    \"category_id\": {{categoryId}},\n    \"unit_price\": 85000.00,\n    \"cost_price\": 55000.00,\n    \"hsn_code\": \"94016100\",\n    \"gst_rate\": 18.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "4.2 Create Another Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Wooden Center Table\",\n    \"sku\": \"TABLE-CENTER-001\",\n    \"description\": \"Elegant wooden center table with glass top\",\n    \"category_id\": {{categoryId}},\n    \"unit_price\": 15000.00,\n    \"cost_price\": 9000.00,\n    \"hsn_code\": \"94036000\",\n    \"gst_rate\": 18.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "4.3 Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has products array', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "4.4 Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"]
+            }
+          }
+        },
+        {
+          "name": "4.5 Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"unit_price\": 90000.00,\n    \"description\": \"5-seater premium teak wood sofa set with premium cushions - Updated\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Analytical Accounts",
+      "item": [
+        {
+          "name": "5.1 Create Analytical Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('analyticalAccountId', response.data.id);",
+                  "    console.log('Analytical Account ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"DEPT-SALES\",\n    \"name\": \"Sales Department\",\n    \"description\": \"Track all sales department expenses and revenue\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/analytical-accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytical-accounts"]
+            }
+          }
+        },
+        {
+          "name": "5.2 Create Another Analytical Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"DEPT-PROD\",\n    \"name\": \"Production Department\",\n    \"description\": \"Track production costs and expenses\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/analytical-accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytical-accounts"]
+            }
+          }
+        },
+        {
+          "name": "5.3 Get All Analytical Accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytical-accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytical-accounts"]
+            }
+          }
+        },
+        {
+          "name": "5.4 Get Analytical Account by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytical-accounts/{{analyticalAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytical-accounts", "{{analyticalAccountId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Auto Analytical Models",
+      "item": [
+        {
+          "name": "6.1 Create Auto Analytical Model",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('autoAnalyticalModelId', response.data.id);",
+                  "    console.log('Auto Analytical Model ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Premium Customer Sales Rule\",\n    \"analytical_account_id\": {{analyticalAccountId}},\n    \"partner_tag\": \"premium\",\n    \"product_category_id\": {{categoryId}},\n    \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auto-analytical-models",
+              "host": ["{{baseUrl}}"],
+              "path": ["auto-analytical-models"]
+            }
+          }
+        },
+        {
+          "name": "6.2 Create Model for Specific Partner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Specific Customer Rule\",\n    \"analytical_account_id\": {{analyticalAccountId}},\n    \"partner_id\": {{contactId}},\n    \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auto-analytical-models",
+              "host": ["{{baseUrl}}"],
+              "path": ["auto-analytical-models"]
+            }
+          }
+        },
+        {
+          "name": "6.3 Get All Auto Analytical Models",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auto-analytical-models",
+              "host": ["{{baseUrl}}"],
+              "path": ["auto-analytical-models"]
+            }
+          }
+        },
+        {
+          "name": "6.4 Test Auto Match (Preview)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has matched account or null', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"partner_id\": {{contactId}},\n    \"product_id\": {{productId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auto-analytical-models/match",
+              "host": ["{{baseUrl}}"],
+              "path": ["auto-analytical-models", "match"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Budgets",
+      "item": [
+        {
+          "name": "7.1 Create Budget",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('budgetId', response.data.id);",
+                  "    console.log('Budget ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Q1 2026 Sales Budget\",\n    \"analytical_account_id\": {{analyticalAccountId}},\n    \"period_start\": \"2026-01-01\",\n    \"period_end\": \"2026-03-31\",\n    \"planned_amount\": 500000.00,\n    \"notes\": \"First quarter sales department budget\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/budgets",
+              "host": ["{{baseUrl}}"],
+              "path": ["budgets"]
+            }
+          }
+        },
+        {
+          "name": "7.2 Get All Budgets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/budgets",
+              "host": ["{{baseUrl}}"],
+              "path": ["budgets"]
+            }
+          }
+        },
+        {
+          "name": "7.3 Get Budget by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/budgets/{{budgetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["budgets", "{{budgetId}}"]
+            }
+          }
+        },
+        {
+          "name": "7.4 Get Budget vs Actual Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has budget report data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/budgets/{{budgetId}}/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["budgets", "{{budgetId}}", "report"]
+            }
+          }
+        },
+        {
+          "name": "7.5 Update Budget",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"planned_amount\": 600000.00,\n    \"notes\": \"Updated Q1 2026 budget - increased target\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/budgets/{{budgetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["budgets", "{{budgetId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Purchase Orders",
+      "item": [
+        {
+          "name": "8.1 Create Purchase Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('purchaseOrderId', response.data.id);",
+                  "    console.log('Purchase Order ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('PO number generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.po_number).to.match(/^PO-\\d+$/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"vendor_id\": {{vendorContactId}},\n    \"order_date\": \"2026-01-31\",\n    \"expected_date\": \"2026-02-15\",\n    \"notes\": \"Raw material purchase for Q1 production\",\n    \"lines\": [\n        {\n            \"product_id\": {{productId}},\n            \"description\": \"Teak Wood Planks\",\n            \"quantity\": 50,\n            \"unit_price\": 1500.00,\n            \"gst_rate\": 18.00\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"]
+            }
+          }
+        },
+        {
+          "name": "8.2 Get All Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"]
+            }
+          }
+        },
+        {
+          "name": "8.3 Get Purchase Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}"]
+            }
+          }
+        },
+        {
+          "name": "8.4 Update PO Status to Confirmed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Vendor Bills",
+      "item": [
+        {
+          "name": "9.1 Create Vendor Bill from PO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('vendorBillId', response.data.id);",
+                  "    console.log('Vendor Bill ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Bill number generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.bill_number).to.match(/^BILL-\\d+$/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"vendor_id\": {{vendorContactId}},\n    \"purchase_order_id\": {{purchaseOrderId}},\n    \"bill_date\": \"2026-01-31\",\n    \"due_date\": \"2026-02-28\",\n    \"vendor_invoice_number\": \"VENDOR-INV-001\",\n    \"notes\": \"Bill for raw material delivery\",\n    \"lines\": [\n        {\n            \"product_id\": {{productId}},\n            \"description\": \"Teak Wood Planks - Received\",\n            \"quantity\": 50,\n            \"unit_price\": 1500.00,\n            \"gst_rate\": 18.00,\n            \"analytical_account_id\": {{analyticalAccountId}}\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vendor-bills",
+              "host": ["{{baseUrl}}"],
+              "path": ["vendor-bills"]
+            }
+          }
+        },
+        {
+          "name": "9.2 Get All Vendor Bills",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vendor-bills",
+              "host": ["{{baseUrl}}"],
+              "path": ["vendor-bills"]
+            }
+          }
+        },
+        {
+          "name": "9.3 Get Vendor Bill by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vendor-bills/{{vendorBillId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vendor-bills", "{{vendorBillId}}"]
+            }
+          }
+        },
+        {
+          "name": "9.4 Update Bill Status to Posted",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"POSTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vendor-bills/{{vendorBillId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["vendor-bills", "{{vendorBillId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Sales Orders",
+      "item": [
+        {
+          "name": "10.1 Create Sales Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('salesOrderId', response.data.id);",
+                  "    console.log('Sales Order ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('SO number generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.so_number).to.match(/^SO-\\d+$/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": {{contactId}},\n    \"order_date\": \"2026-01-31\",\n    \"delivery_date\": \"2026-02-10\",\n    \"shipping_address\": \"123 MG Road, Mumbai - 400001\",\n    \"notes\": \"Customer order for living room furniture\",\n    \"lines\": [\n        {\n            \"product_id\": {{productId}},\n            \"description\": \"Premium Teak Wood Sofa Set\",\n            \"quantity\": 1,\n            \"unit_price\": 85000.00,\n            \"discount_percent\": 5.00,\n            \"gst_rate\": 18.00\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sales-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales-orders"]
+            }
+          }
+        },
+        {
+          "name": "10.2 Get All Sales Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sales-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales-orders"]
+            }
+          }
+        },
+        {
+          "name": "10.3 Get Sales Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sales-orders/{{salesOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales-orders", "{{salesOrderId}}"]
+            }
+          }
+        },
+        {
+          "name": "10.4 Update SO Status to Confirmed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sales-orders/{{salesOrderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales-orders", "{{salesOrderId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Customer Invoices",
+      "item": [
+        {
+          "name": "11.1 Create Customer Invoice from SO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('customerInvoiceId', response.data.id);",
+                  "    console.log('Customer Invoice ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Invoice number generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.invoice_number).to.match(/^INV-\\d+$/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": {{contactId}},\n    \"sales_order_id\": {{salesOrderId}},\n    \"invoice_date\": \"2026-01-31\",\n    \"due_date\": \"2026-02-28\",\n    \"notes\": \"Invoice for furniture delivery\",\n    \"lines\": [\n        {\n            \"product_id\": {{productId}},\n            \"description\": \"Premium Teak Wood Sofa Set - Delivered\",\n            \"quantity\": 1,\n            \"unit_price\": 85000.00,\n            \"discount_percent\": 5.00,\n            \"gst_rate\": 18.00,\n            \"analytical_account_id\": {{analyticalAccountId}}\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customer-invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["customer-invoices"]
+            }
+          }
+        },
+        {
+          "name": "11.2 Get All Customer Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/customer-invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["customer-invoices"]
+            }
+          }
+        },
+        {
+          "name": "11.3 Get Customer Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/customer-invoices/{{customerInvoiceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["customer-invoices", "{{customerInvoiceId}}"]
+            }
+          }
+        },
+        {
+          "name": "11.4 Update Invoice Status to Posted",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"POSTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customer-invoices/{{customerInvoiceId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["customer-invoices", "{{customerInvoiceId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Payments",
+      "item": [
+        {
+          "name": "12.1 Create Payment for Vendor Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.id) {",
+                  "    pm.collectionVariables.set('paymentId', response.data.id);",
+                  "    console.log('Payment ID saved:', response.data.id);",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Payment number generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.payment_number).to.match(/^PAY-\\d+$/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"payment_type\": \"OUTBOUND\",\n    \"contact_id\": {{vendorContactId}},\n    \"vendor_bill_id\": {{vendorBillId}},\n    \"amount\": 88500.00,\n    \"payment_date\": \"2026-01-31\",\n    \"payment_method\": \"BANK_TRANSFER\",\n    \"reference\": \"NEFT-REF-123456\",\n    \"notes\": \"Full payment for vendor bill\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"]
+            }
+          }
+        },
+        {
+          "name": "12.2 Create Payment for Customer Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"payment_type\": \"INBOUND\",\n    \"contact_id\": {{contactId}},\n    \"customer_invoice_id\": {{customerInvoiceId}},\n    \"amount\": 95285.00,\n    \"payment_date\": \"2026-01-31\",\n    \"payment_method\": \"BANK_TRANSFER\",\n    \"reference\": \"CUST-PAY-789012\",\n    \"notes\": \"Payment received from customer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"]
+            }
+          }
+        },
+        {
+          "name": "12.3 Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"]
+            }
+          }
+        },
+        {
+          "name": "12.4 Get Payments (Outbound Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments?payment_type=OUTBOUND",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"],
+              "query": [
+                { "key": "payment_type", "value": "OUTBOUND" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "12.5 Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/{{paymentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "{{paymentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Customer Portal",
+      "item": [
+        {
+          "name": "13.1 Customer Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.token) {",
+                  "    pm.collectionVariables.set('customerToken', response.data.token);",
+                  "    console.log('Customer token saved');",
+                  "}",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('User role is CUSTOMER', function () {",
+                  "    pm.expect(response.data.user.role).to.eql('CUSTOMER');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"rajesh.kumar@example.com\",\n    \"password\": \"your-password-here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as customer (use password from email if auto-created)"
+          }
+        },
+        {
+          "name": "13.2 Get My Invoices (Customer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/customers/my-invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "my-invoices"]
+            }
+          }
+        },
+        {
+          "name": "13.3 Get My Invoice Details (Customer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/customers/my-invoices/{{customerInvoiceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "my-invoices", "{{customerInvoiceId}}"]
+            }
+          }
+        },
+        {
+          "name": "13.4 Get My Profile (Customer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Reports",
+      "item": [
+        {
+          "name": "14.1 Budget vs Actual Report (All)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has report data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/budgets/report/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["budgets", "report", "all"]
+            }
+          }
+        },
+        {
+          "name": "14.2 Budget Report by Analytical Account",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/budgets/report/all?analytical_account_id={{analyticalAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["budgets", "report", "all"],
+              "query": [
+                { "key": "analytical_account_id", "value": "{{analyticalAccountId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "14.3 Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

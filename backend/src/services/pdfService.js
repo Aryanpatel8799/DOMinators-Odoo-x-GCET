@@ -1,0 +1,560 @@
+const PDFDocument = require('pdfkit');
+
+/**
+ * PDF Generation Service
+ * Generates professional PDF documents for invoices, bills, sales orders, and purchase orders
+ */
+class PDFService {
+    /**
+     * Generate common header for all documents
+     */
+    generateHeader(doc, title) {
+        doc.fontSize(20)
+            .font('Helvetica-Bold')
+            .text('SHIV FURNITURE', 50, 50)
+            .fontSize(10)
+            .font('Helvetica')
+            .text('Budget Accounting System', 50, 75)
+            .text('123 Furniture Street, Gujarat, India', 50, 90)
+            .text('Phone: +91-9876543210 | Email: accounts@shivfurniture.com', 50, 105);
+
+        // Document title on right
+        doc.fontSize(24)
+            .font('Helvetica-Bold')
+            .text(title, 400, 50, { align: 'right' });
+
+        // Line separator
+        doc.moveTo(50, 130)
+            .lineTo(550, 130)
+            .stroke();
+
+        return 145; // Return Y position for next content
+    }
+
+    /**
+     * Generate document info section
+     */
+    generateDocumentInfo(doc, startY, docInfo) {
+        const leftCol = 50;
+        const rightCol = 350;
+        let y = startY;
+
+        doc.fontSize(10).font('Helvetica-Bold');
+
+        // Left column - Document details
+        Object.entries(docInfo.left || {}).forEach(([label, value]) => {
+            doc.text(`${label}:`, leftCol, y)
+                .font('Helvetica')
+                .text(value || 'N/A', leftCol + 100, y)
+                .font('Helvetica-Bold');
+            y += 15;
+        });
+
+        // Reset Y for right column
+        y = startY;
+
+        // Right column - Contact/Date details
+        Object.entries(docInfo.right || {}).forEach(([label, value]) => {
+            doc.text(`${label}:`, rightCol, y)
+                .font('Helvetica')
+                .text(value || 'N/A', rightCol + 80, y)
+                .font('Helvetica-Bold');
+            y += 15;
+        });
+
+        return Math.max(y, startY + Object.keys(docInfo.left || {}).length * 15) + 20;
+    }
+
+    /**
+     * Generate line items table
+     */
+    generateTable(doc, startY, headers, rows, columnWidths) {
+        const tableLeft = 50;
+        let y = startY;
+
+        // Table header background
+        doc.rect(tableLeft, y, 500, 20).fill('#f0f0f0');
+
+        // Table headers
+        doc.fillColor('#000000').fontSize(9).font('Helvetica-Bold');
+        let x = tableLeft + 5;
+        headers.forEach((header, i) => {
+            doc.text(header, x, y + 5, { width: columnWidths[i] - 10 });
+            x += columnWidths[i];
+        });
+
+        y += 25;
+
+        // Table rows
+        doc.font('Helvetica').fontSize(9);
+        rows.forEach((row, rowIndex) => {
+            // Alternate row background
+            if (rowIndex % 2 === 1) {
+                doc.rect(tableLeft, y - 3, 500, 18).fill('#fafafa');
+                doc.fillColor('#000000');
+            }
+
+            x = tableLeft + 5;
+            row.forEach((cell, i) => {
+                doc.text(String(cell || ''), x, y, { width: columnWidths[i] - 10 });
+                x += columnWidths[i];
+            });
+            y += 18;
+
+            // Page break if needed
+            if (y > 700) {
+                doc.addPage();
+                y = 50;
+            }
+        });
+
+        // Table border
+        doc.rect(tableLeft, startY, 500, y - startY + 5).stroke();
+
+        return y + 20;
+    }
+
+    /**
+     * Generate totals section
+     */
+    generateTotals(doc, startY, totals) {
+        const rightAlign = 450;
+        let y = startY;
+
+        doc.fontSize(10);
+
+        totals.forEach(({ label, value, bold }) => {
+            if (bold) {
+                doc.font('Helvetica-Bold');
+                doc.moveTo(350, y - 5).lineTo(550, y - 5).stroke();
+            } else {
+                doc.font('Helvetica');
+            }
+            doc.text(label, 350, y);
+            doc.text(value, rightAlign, y, { align: 'right', width: 100 });
+            y += 18;
+        });
+
+        return y + 10;
+    }
+
+    /**
+     * Generate footer
+     */
+    generateFooter(doc, status, paymentStatus) {
+        const bottomY = 720;
+
+        doc.moveTo(50, bottomY).lineTo(550, bottomY).stroke();
+
+        doc.fontSize(9).font('Helvetica');
+        
+        // Status badges
+        const statusColor = status === 'POSTED' ? '#28a745' : status === 'CANCELLED' ? '#dc3545' : '#6c757d';
+        doc.fillColor(statusColor)
+            .text(`Document Status: ${status}`, 50, bottomY + 10);
+
+        if (paymentStatus) {
+            const paymentColor = paymentStatus === 'PAID' ? '#28a745' : 
+                                paymentStatus === 'PARTIALLY_PAID' ? '#ffc107' : '#dc3545';
+            doc.fillColor(paymentColor)
+                .text(`Payment Status: ${paymentStatus.replace('_', ' ')}`, 200, bottomY + 10);
+        }
+
+        doc.fillColor('#666666')
+            .text('Generated by Shiv Furniture Budget Accounting System', 50, bottomY + 30)
+            .text(`Generated on: ${new Date().toLocaleString()}`, 50, bottomY + 45);
+
+        doc.fillColor('#000000');
+    }
+
+    /**
+     * Generate Customer Invoice PDF
+     */
+    async generateInvoicePDF(invoice, lines) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({ margin: 50 });
+                const chunks = [];
+
+                doc.on('data', chunk => chunks.push(chunk));
+                doc.on('end', () => resolve(Buffer.concat(chunks)));
+                doc.on('error', reject);
+
+                // Header
+                let y = this.generateHeader(doc, 'INVOICE');
+
+                // Document info
+                y = this.generateDocumentInfo(doc, y, {
+                    left: {
+                        'Invoice No': invoice.invoice_number,
+                        'Invoice Date': new Date(invoice.invoice_date).toLocaleDateString(),
+                        'Due Date': new Date(invoice.due_date).toLocaleDateString(),
+                        'Sales Order': invoice.sales_order_number || 'N/A',
+                    },
+                    right: {
+                        'Customer': invoice.customer_name,
+                        'Email': invoice.customer_email,
+                        'Status': invoice.status,
+                        'Payment': invoice.payment_status?.replace('_', ' '),
+                    }
+                });
+
+                // Line items table
+                const headers = ['#', 'Product', 'Quantity', 'Unit Price', 'Subtotal'];
+                const columnWidths = [30, 200, 70, 100, 100];
+                const rows = lines.map((line, i) => [
+                    i + 1,
+                    line.product_name,
+                    parseFloat(line.quantity).toFixed(2),
+                    `₹${parseFloat(line.unit_price).toFixed(2)}`,
+                    `₹${parseFloat(line.subtotal).toFixed(2)}`
+                ]);
+
+                y = this.generateTable(doc, y, headers, rows, columnWidths);
+
+                // Totals
+                const paidAmount = parseFloat(invoice.paid_amount) || 0;
+                const totalAmount = parseFloat(invoice.total_amount) || 0;
+                const balanceDue = totalAmount - paidAmount;
+
+                y = this.generateTotals(doc, y, [
+                    { label: 'Subtotal:', value: `₹${totalAmount.toFixed(2)}` },
+                    { label: 'Paid Amount:', value: `₹${paidAmount.toFixed(2)}` },
+                    { label: 'Balance Due:', value: `₹${balanceDue.toFixed(2)}`, bold: true },
+                ]);
+
+                // Footer
+                this.generateFooter(doc, invoice.status, invoice.payment_status);
+
+                // Notes
+                if (invoice.notes) {
+                    doc.fontSize(9).font('Helvetica')
+                        .text('Notes:', 50, y)
+                        .text(invoice.notes, 50, y + 12, { width: 500 });
+                }
+
+                doc.end();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Generate Vendor Bill PDF
+     */
+    async generateBillPDF(bill, lines) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({ margin: 50 });
+                const chunks = [];
+
+                doc.on('data', chunk => chunks.push(chunk));
+                doc.on('end', () => resolve(Buffer.concat(chunks)));
+                doc.on('error', reject);
+
+                // Header
+                let y = this.generateHeader(doc, 'VENDOR BILL');
+
+                // Document info
+                y = this.generateDocumentInfo(doc, y, {
+                    left: {
+                        'Bill No': bill.bill_number,
+                        'Bill Date': new Date(bill.bill_date).toLocaleDateString(),
+                        'Due Date': new Date(bill.due_date).toLocaleDateString(),
+                        'Purchase Order': bill.purchase_order_number || 'N/A',
+                    },
+                    right: {
+                        'Vendor': bill.vendor_name,
+                        'Email': bill.vendor_email,
+                        'Status': bill.status,
+                        'Payment': bill.payment_status?.replace('_', ' '),
+                    }
+                });
+
+                // Line items table
+                const headers = ['#', 'Product', 'Quantity', 'Unit Price', 'Subtotal'];
+                const columnWidths = [30, 200, 70, 100, 100];
+                const rows = lines.map((line, i) => [
+                    i + 1,
+                    line.product_name,
+                    parseFloat(line.quantity).toFixed(2),
+                    `₹${parseFloat(line.unit_price).toFixed(2)}`,
+                    `₹${parseFloat(line.subtotal).toFixed(2)}`
+                ]);
+
+                y = this.generateTable(doc, y, headers, rows, columnWidths);
+
+                // Totals
+                const paidAmount = parseFloat(bill.paid_amount) || 0;
+                const totalAmount = parseFloat(bill.total_amount) || 0;
+                const balanceDue = totalAmount - paidAmount;
+
+                y = this.generateTotals(doc, y, [
+                    { label: 'Subtotal:', value: `₹${totalAmount.toFixed(2)}` },
+                    { label: 'Paid Amount:', value: `₹${paidAmount.toFixed(2)}` },
+                    { label: 'Balance Due:', value: `₹${balanceDue.toFixed(2)}`, bold: true },
+                ]);
+
+                // Footer
+                this.generateFooter(doc, bill.status, bill.payment_status);
+
+                // Notes
+                if (bill.notes) {
+                    doc.fontSize(9).font('Helvetica')
+                        .text('Notes:', 50, y)
+                        .text(bill.notes, 50, y + 12, { width: 500 });
+                }
+
+                doc.end();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Generate Sales Order PDF
+     */
+    async generateSalesOrderPDF(order, lines) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({ margin: 50 });
+                const chunks = [];
+
+                doc.on('data', chunk => chunks.push(chunk));
+                doc.on('end', () => resolve(Buffer.concat(chunks)));
+                doc.on('error', reject);
+
+                // Header
+                let y = this.generateHeader(doc, 'SALES ORDER');
+
+                // Document info
+                y = this.generateDocumentInfo(doc, y, {
+                    left: {
+                        'Order No': order.order_number,
+                        'Order Date': new Date(order.order_date).toLocaleDateString(),
+                        'Expected Date': order.expected_date ? new Date(order.expected_date).toLocaleDateString() : 'N/A',
+                    },
+                    right: {
+                        'Customer': order.customer_name,
+                        'Email': order.customer_email,
+                        'Status': order.status,
+                    }
+                });
+
+                // Line items table
+                const headers = ['#', 'Product', 'Quantity', 'Unit Price', 'Subtotal'];
+                const columnWidths = [30, 200, 70, 100, 100];
+                const rows = lines.map((line, i) => [
+                    i + 1,
+                    line.product_name,
+                    parseFloat(line.quantity).toFixed(2),
+                    `₹${parseFloat(line.unit_price).toFixed(2)}`,
+                    `₹${parseFloat(line.subtotal).toFixed(2)}`
+                ]);
+
+                y = this.generateTable(doc, y, headers, rows, columnWidths);
+
+                // Totals
+                const totalAmount = parseFloat(order.total_amount) || 0;
+
+                y = this.generateTotals(doc, y, [
+                    { label: 'Total Amount:', value: `₹${totalAmount.toFixed(2)}`, bold: true },
+                ]);
+
+                // Footer
+                this.generateFooter(doc, order.status);
+
+                // Notes
+                if (order.notes) {
+                    doc.fontSize(9).font('Helvetica')
+                        .text('Notes:', 50, y)
+                        .text(order.notes, 50, y + 12, { width: 500 });
+                }
+
+                doc.end();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Generate Purchase Order PDF
+     */
+    async generatePurchaseOrderPDF(order, lines) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({ margin: 50 });
+                const chunks = [];
+
+                doc.on('data', chunk => chunks.push(chunk));
+                doc.on('end', () => resolve(Buffer.concat(chunks)));
+                doc.on('error', reject);
+
+                // Header
+                let y = this.generateHeader(doc, 'PURCHASE ORDER');
+
+                // Document info
+                y = this.generateDocumentInfo(doc, y, {
+                    left: {
+                        'Order No': order.order_number,
+                        'Order Date': new Date(order.order_date).toLocaleDateString(),
+                        'Expected Date': order.expected_date ? new Date(order.expected_date).toLocaleDateString() : 'N/A',
+                    },
+                    right: {
+                        'Vendor': order.vendor_name,
+                        'Email': order.vendor_email,
+                        'Status': order.status,
+                    }
+                });
+
+                // Line items table
+                const headers = ['#', 'Product', 'Quantity', 'Unit Price', 'Subtotal'];
+                const columnWidths = [30, 200, 70, 100, 100];
+                const rows = lines.map((line, i) => [
+                    i + 1,
+                    line.product_name,
+                    parseFloat(line.quantity).toFixed(2),
+                    `₹${parseFloat(line.unit_price).toFixed(2)}`,
+                    `₹${parseFloat(line.subtotal).toFixed(2)}`
+                ]);
+
+                y = this.generateTable(doc, y, headers, rows, columnWidths);
+
+                // Totals
+                const totalAmount = parseFloat(order.total_amount) || 0;
+
+                y = this.generateTotals(doc, y, [
+                    { label: 'Total Amount:', value: `₹${totalAmount.toFixed(2)}`, bold: true },
+                ]);
+
+                // Footer
+                this.generateFooter(doc, order.status);
+
+                // Notes
+                if (order.notes) {
+                    doc.fontSize(9).font('Helvetica')
+                        .text('Notes:', 50, y)
+                        .text(order.notes, 50, y + 12, { width: 500 });
+                }
+
+                doc.end();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Generate Budget Report PDF
+     */
+    async generateBudgetReportPDF(reportData, summary, filters) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({ margin: 50, layout: 'landscape' });
+                const chunks = [];
+
+                doc.on('data', chunk => chunks.push(chunk));
+                doc.on('end', () => resolve(Buffer.concat(chunks)));
+                doc.on('error', reject);
+
+                // Header
+                doc.fontSize(20)
+                    .font('Helvetica-Bold')
+                    .text('SHIV FURNITURE', 50, 30)
+                    .fontSize(16)
+                    .text('Budget vs Actual Report', 50, 55);
+
+                // Filter info
+                doc.fontSize(10).font('Helvetica')
+                    .text(`Period: ${filters.period_start || 'All'} to ${filters.period_end || 'All'}`, 50, 80)
+                    .text(`Generated: ${new Date().toLocaleString()}`, 50, 95);
+
+                let y = 120;
+
+                // Summary Section
+                doc.fontSize(12).font('Helvetica-Bold').text('Summary', 50, y);
+                y += 20;
+
+                doc.fontSize(10).font('Helvetica');
+                const summaryItems = [
+                    ['Total Budget', `₹${summary.total_budget.toFixed(2)}`],
+                    ['Total Expense', `₹${summary.total_expense.toFixed(2)}`],
+                    ['Total Revenue', `₹${summary.total_revenue.toFixed(2)}`],
+                    ['Net Actual', `₹${summary.total_net_actual.toFixed(2)}`],
+                    ['Remaining', `₹${summary.total_remaining.toFixed(2)}`],
+                    ['Utilization', `${summary.overall_utilization}%`],
+                ];
+
+                summaryItems.forEach(([label, value], i) => {
+                    const col = i % 3;
+                    const row = Math.floor(i / 3);
+                    doc.text(`${label}: ${value}`, 50 + col * 250, y + row * 15);
+                });
+
+                y += 50;
+
+                // Detailed Table
+                doc.fontSize(12).font('Helvetica-Bold').text('Detailed Breakdown', 50, y);
+                y += 20;
+
+                const headers = ['Cost Center', 'Period', 'Budget', 'Expense', 'Revenue', 'Net Actual', 'Remaining', 'Utilization'];
+                const columnWidths = [120, 100, 80, 80, 80, 80, 80, 80];
+
+                // Table header
+                doc.rect(50, y, 700, 20).fill('#f0f0f0');
+                doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold');
+                
+                let x = 55;
+                headers.forEach((header, i) => {
+                    doc.text(header, x, y + 5, { width: columnWidths[i] - 5 });
+                    x += columnWidths[i];
+                });
+
+                y += 25;
+                doc.font('Helvetica').fontSize(8);
+
+                reportData.forEach((row, rowIndex) => {
+                    if (y > 500) {
+                        doc.addPage();
+                        y = 50;
+                    }
+
+                    if (rowIndex % 2 === 1) {
+                        doc.rect(50, y - 3, 700, 16).fill('#fafafa');
+                        doc.fillColor('#000000');
+                    }
+
+                    x = 55;
+                    const rowData = [
+                        `${row.analytical_account_code} - ${row.analytical_account_name}`,
+                        `${new Date(row.period_start).toLocaleDateString()} - ${new Date(row.period_end).toLocaleDateString()}`,
+                        `₹${parseFloat(row.budget_amount).toFixed(0)}`,
+                        `₹${parseFloat(row.actual_expense).toFixed(0)}`,
+                        `₹${parseFloat(row.actual_revenue).toFixed(0)}`,
+                        `₹${parseFloat(row.net_actual).toFixed(0)}`,
+                        `₹${parseFloat(row.remaining_amount).toFixed(0)}`,
+                        `${parseFloat(row.utilization_percentage).toFixed(1)}%`,
+                    ];
+
+                    rowData.forEach((cell, i) => {
+                        doc.text(cell, x, y, { width: columnWidths[i] - 5 });
+                        x += columnWidths[i];
+                    });
+
+                    y += 16;
+                });
+
+                doc.rect(50, 120 + 70, 700, y - 190).stroke();
+
+                doc.end();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+}
+
+module.exports = new PDFService();
