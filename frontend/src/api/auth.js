@@ -1,17 +1,9 @@
-/**
- * Authentication API Service
- * Handles login, registration, and user management
- */
+
 
 import { api } from './client';
 
 export const authAPI = {
-  /**
-   * Login user
-   * @param {string} email - User email
-   * @param {string} password - User password
-   * @returns {Promise<Object>} { token, user }
-   */
+
   login: async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
     debugger
