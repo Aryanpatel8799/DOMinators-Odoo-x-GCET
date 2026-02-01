@@ -6,6 +6,7 @@ const db = require('../config/database');
 /**
  * Authenticate JWT token
  */
+
 const authenticate = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
