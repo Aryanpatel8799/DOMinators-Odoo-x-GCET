@@ -14,11 +14,7 @@ export const authAPI = {
     return response;
   },
 
-  /**
-   * Register new user (customer registration)
-   * @param {Object} userData - { email, password, name, role }
-   * @returns {Promise<Object>} Created user
-   */
+ 
   register: (userData) => 
     api.post('/auth/register', userData),
 
