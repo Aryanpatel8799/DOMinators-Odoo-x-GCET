@@ -1,19 +1,11 @@
 import { api } from './client';
 
 export const analyticalAccountAPI = {
-  /**
-   * List all analytical accounts (cost centers)
-   * @param {Object} params - { page, limit }
-   * @returns {Promise<Object>} { data: AnalyticalAccount[], pagination }
-   */
+
   getAll: (params = {}) => 
     api.get('/analytical-accounts', params),
 
-  /**
-   * Get analytical account by ID
-   * @param {string} id - Account UUID
-   * @returns {Promise<Object>} Account data
-   */
+
   getById: (id) => 
     api.get(`/analytical-accounts/${id}`),
 
