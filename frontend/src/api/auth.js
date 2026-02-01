@@ -25,20 +25,10 @@ export const authAPI = {
   getUsers: () => 
     api.get('/auth/users'),
 
-  /**
-   * Update a user (Admin only)
-   * @param {string} id - User ID
-   * @param {Object} userData - User data to update
-   * @returns {Promise<Object>} Updated user
-   */
   updateUser: (id, userData) => 
     api.put(`/auth/users/${id}`, userData),
 
-  /**
-   * Delete a user (Admin only)
-   * @param {string} id - User ID
-   * @returns {Promise<Object>} Success response
-   */
+  
   deleteUser: (id) => 
     api.delete(`/auth/users/${id}`),
 
