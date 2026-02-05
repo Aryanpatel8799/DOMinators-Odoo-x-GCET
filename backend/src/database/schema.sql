@@ -1,3 +1,4 @@
+
 -- =====================================================
 -- SHIV FURNITURE - BUDGET ACCOUNTING SYSTEM
 -- PostgreSQL Database Schema

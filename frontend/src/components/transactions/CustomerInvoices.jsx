@@ -38,7 +38,6 @@ export function CustomerInvoices() {
   });
   const [isEditing, setIsEditing] = useState(false);
 
-  // Load data on mount
   useEffect(() => {
     loadData();
   }, []);

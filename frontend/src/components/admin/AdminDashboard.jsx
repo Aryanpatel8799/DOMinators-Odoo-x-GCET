@@ -27,7 +27,6 @@ export function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      // Fetch all data in parallel
       const [
         contactsRes,
         productsRes,
@@ -45,10 +44,9 @@ export function AdminDashboard() {
         purchaseOrderAPI.getAll({ limit: 1 }),
         salesOrderAPI.getAll({ limit: 1 }),
         customerInvoiceAPI.getAll({ payment_status: 'NOT_PAID', limit: 1 }),
-        budgetAPI.getAll({ limit: 100 })  // Get all budgets like Budget Master
+        budgetAPI.getAll({ limit: 100 }) 
       ]);
 
-      // Calculate total budget from all budgets
       const totalBudgetAmount = (allBudgetsRes.data || []).reduce(
         (sum, b) => sum + (parseFloat(b.budget_amount) || 0), 0
       );
@@ -64,7 +62,6 @@ export function AdminDashboard() {
         totalBudget: totalBudgetAmount
       });
 
-      // Set budget summary from actual budget data (same as Budget Master)
       if (allBudgetsRes.data?.length > 0) {
         const budgetData = allBudgetsRes.data
           .slice(0, 5)
